@@ -61,7 +61,6 @@ const jp = (addr) => {
 const jl = (reg_1, reg_2, addr) => {
   if (registers[reg_1] < registers[reg_2])
     jp(addr)
-  // else currentAddr += 1
 }
 
 const call = (addr) => {
@@ -103,15 +102,10 @@ const readProgram = () => {
     currentAddr += 1
 
     const expectedTotalArgs = (fnInstruction?.length || 0)
-    console.log('ADDR: ',currentAddr)
-    const args = program.slice(currentAddr, expectedTotalArgs + 1)
-    currentAddr += expectedTotalArgs + 1
+    const args = program.slice(currentAddr, currentAddr + expectedTotalArgs + 1)
+    currentAddr += expectedTotalArgs 
 
     fnInstruction?.apply(this, args)
-    // if (![40, 41, 42, 50].includes(instruction))
-    //   currentAddr += expectedTotalArgs
-
-    console.log({ fn: fnInstruction?.name, expectedTotalArgs, args, currentAddr, })
   }
 }
 
