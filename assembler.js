@@ -20,7 +20,7 @@ const instructions = new Map([
 ])
 
 const parseLine = (line) => {
-  const tokens = line.split(" ").map(token => token.replace(",", ""))
+  const tokens = line.split(/\s+/g).map(token => token.replace(",", "").trim()).filter(token => token.length > 0)
   return tokens
     .map(token => {
       const instruction = instructions.get(token.toLowerCase())
