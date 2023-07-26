@@ -72,7 +72,7 @@ const ret = () => {
   jp(stack.pop())
 }
 
-const _print = (reg) => {
+const print = (reg) => {
   console.log(registers[reg])
 }
 
@@ -91,7 +91,7 @@ const instructions = new Map([
   [41, jl],
   [42, call],
   [50, ret],
-  [60, _print],
+  [60, print],
   [255, halt],
 ])
 
