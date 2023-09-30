@@ -113,7 +113,7 @@ function executeCode(filePath) {
   const program = assemble(filePath)
 
   while (currentAddress < program.length && !shouldHalt) {
-    const fnInstruction = instructions.get(program[currentAddress])
+    const fnInstruction = instructions[program[currentAddress]]
     currentAddress += 1
 
     const expectedTotalArgs = (fnInstruction?.length || 0)
