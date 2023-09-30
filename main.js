@@ -1,112 +1,127 @@
 // @ts-check
 
-const program = [
-  11, 0, 10,
-  42, 6,
-  255,
-  30, 0,
-  11, 0, 0,
-  11, 1, 1,
-  11, 3, 1,
-  60, 1,
-  10, 2, 0,
-  20, 2, 1,
-  60, 2,
-  10, 0, 1,
-  10, 1, 2,
-  11, 2, 1,
-  20, 3, 2,
-  31, 2,
-  30, 2,
-  41, 3, 2, 19,
-  31, 0,
-  50
-]
+const fs = require("fs")
 
-const registers = [0, 0, 0, 0]
+function assemble(filePath) {
+  const instructions = {
+    'movr': 10,
+    'movv': 11,
+    'add': 20,
+    'sub': 21,
+    'push': 30,
+    'pop': 31,
+    'jp': 40,
+    'jl': 41,
+    'call': 42,
+    'ret': 50,
+    'print': 60,
+    'halt': 255,
+  }
 
-const stack = []
+  const parsedTokens = []
+  const lines = fs.readFileSync(filePath).toString().trim().split("\n")
 
-let currentAddr = 0
-let shouldHalt = false
+  for (const line of lines) {
+    const tokens = line.trim().replace(/,/g, " ").toLowerCase().split(/\s+/g)
+    console.log(tokens)
 
-const movr = (reg_dst, reg_src) => {
-  registers[reg_dst] = registers[reg_src]
+    for (const token of tokens) {
+      const isRegister = token.length == 2 && token.slice(0, 1) == 'r'
+      const instruction = instructions[token]
+
+      if (isRegister) parsedTokens.push(parseInt(token.slice(1)))
+      else if (instruction) parsedTokens.push(instruction)
+      else parsedTokens.push(parseInt(token))
+    }
+  }
+
+  return parsedTokens
 }
 
-const movv = (reg_dst, value) => {
-  registers[reg_dst] = value
-}
+function executeCode(filePath) {
+  const registers = [0, 0, 0, 0]
+  const stack = []
 
-const add = (reg_dst, reg_src) => {
-  registers[reg_dst] += registers[reg_src]
-}
+  let currentAddress = 0
+  let shouldHalt = false
 
-const sub = (reg_dst, reg_src) => {
-  registers[reg_dst] -= registers[reg_src]
-}
+  const movr = (reg_dst, reg_src) => {
+    registers[reg_dst] = registers[reg_src]
+  }
 
-const push = (reg_src) => {
-  stack.push(registers[reg_src])
-}
+  const movv = (reg_dst, value) => {
+    registers[reg_dst] = value
+  }
 
-const pop = (reg_dst) => {
-  registers[reg_dst] = stack.pop()
-}
+  const add = (reg_dst, reg_src) => {
+    registers[reg_dst] += registers[reg_src]
+  }
 
-const jp = (addr) => {
-  currentAddr = addr
-}
+  const sub = (reg_dst, reg_src) => {
+    registers[reg_dst] -= registers[reg_src]
+  }
 
-const jl = (reg_1, reg_2, addr) => {
-  if (registers[reg_1] < registers[reg_2])
+  const push = (reg_src) => {
+    stack.push(registers[reg_src])
+  }
+
+  const pop = (reg_dst) => {
+    registers[reg_dst] = stack.pop()
+  }
+
+  const jp = (addr) => {
+    currentAddress = addr
+  }
+
+  const jl = (reg_1, reg_2, addr) => {
+    if (registers[reg_1] < registers[reg_2])
+      jp(addr)
+  }
+
+  const call = (addr) => {
+    stack.push(addr)
     jp(addr)
-}
+  }
 
-const call = (addr) => {
-  stack.push(addr)
-  jp(addr)
-}
+  const ret = () => {
+    jp(stack.pop())
+  }
 
-const ret = () => {
-  jp(stack.pop())
-}
+  const print = (reg) => {
+    console.log(registers[reg])
+  }
 
-const print = (reg) => {
-  console.log(registers[reg])
-}
+  const halt = () => {
+    shouldHalt = true
+  }
 
-const halt = () => {
-  shouldHalt = true
-}
+  const instructions = {
+    10: movr,
+    11: movv,
+    20: add,
+    21: sub,
+    30: push,
+    31: pop,
+    40: jp,
+    41: jl,
+    42: call,
+    50: ret,
+    60: print,
+    255: halt,
+  }
 
-const instructions = new Map([
-  [10, movr],
-  [11, movv],
-  [20, add],
-  [21, sub],
-  [30, push],
-  [31, pop],
-  [40, jp],
-  [41, jl],
-  [42, call],
-  [50, ret],
-  [60, print],
-  [255, halt],
-])
+  const program = assemble(filePath)
 
-const readProgram = () => {
-  while (currentAddr < program.length && !shouldHalt) {
-    const instruction = program[currentAddr]
-    const fnInstruction = instructions.get(instruction)
-    currentAddr += 1
+  while (currentAddress < program.length && !shouldHalt) {
+    const fnInstruction = instructions.get(program[currentAddress])
+    currentAddress += 1
 
     const expectedTotalArgs = (fnInstruction?.length || 0)
-    const args = program.slice(currentAddr, currentAddr + expectedTotalArgs + 1)
-    currentAddr += expectedTotalArgs 
+    const args = program.slice(currentAddress, currentAddress + expectedTotalArgs + 1)
+    currentAddress += expectedTotalArgs
 
     fnInstruction?.apply(this, args)
   }
 }
 
-readProgram()
+executeCode("main.asm")
